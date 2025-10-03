@@ -146,7 +146,12 @@ SIMULATION_ITEMS = 30  # N
 SIMULATIONS = 10
 LAST_DAYS = 10
 
-STATUS_ORDER = ['BACKLOG','DOC & DESIGN','TECHINICAL TEST','READY FOR DEV','IN PROGRESS','PR','OFFSIDE','QA REVIEW','READY FOR QA','DEVOPS','DONE']
+status_df = pd.read_csv('data/status.csv')
+print(status_df)
+
+# ========== c Status ======== #
+STATUS_ORDER = status_df["status_name"].unique()
+print(STATUS_ORDER)
 
 
 ### read data ###
@@ -195,57 +200,43 @@ epic_list = df["project_key"].unique().tolist()
 
 # ========== Status ======== #
 status_file_path = "data/status.csv"
-status_file = df["status_to_name"].unique()
+data_status = []
 
-if os.path.exists(status_file_path):
-   status_list_from_file = status.fetch_from_csv("PRJ", status_file_path)
-   print(status_list_from_file)
-else:
-   print("The file does not exist.")
+# Etapa 1: Tenta carregar os status e sua ordem do `status.csv`.
+if os.path.exists(status_file_path) and os.path.getsize(status_file_path) > 0:
+    status_data = status.fetch_from_csv("PRJ", status_file_path)
+    if status_data:
+        data_status = [item['status_name'] for item in status_data]
 
-# Realizar a leitura do status do arquivo de transições para comparar com o status.csv
-status_list = df["status_from_name"].unique().tolist()
+# Etapa 2: Pega todos os status únicos do dataframe principal para encontrar os que estão faltando.
+# Usar dropna() para evitar problemas com valores nulos.
+all_statuses = df["status_from_name"].dropna().unique().tolist()
 
-compare = status.compare_status(status_list, status_list_from_file)
-
-
-# Adicionando os status faltantes no arquivo status.csv 
-status.save_to_csv("PRJ", compare, status_file_path)
-# print("Adicionando lista")
-
-
-# status_list_original = status_file
+# Etapa 3: Se `status.csv` estava vazio ou não existia, inicializa com os status do dataframe.
+if not data_status and all_statuses:
+    status.save_to_csv("PRJ", all_statuses, status_file_path)
+    data_status = status.fetch_from_csv("PRJ", status_file_path)
 
 
-# Salvar na lista para popular a tela.
+# Etapa 4: Verifica se há novos status no dataframe que não estão na lista atual.
+new_statuses = [s for s in all_statuses if s not in data_status]
 
+print("------new------")
+print(new_statuses)
+print("-------all-----")
+print(all_statuses)
+print("-------data-----")
+print(data_status)
+print("--- new status")
+print(new_statuses)
 
-data_status = status.fetch_from_csv("PRJ", status_file_path)
-
-# print("-------------------------------------------------------------------------")
-# print(data_status) 
-# print("-------------------------------------------------------------------------")
-
-
-data_status_file = []    
-# data_status_aux = status.create_list(pd_lista)
-
-
-for data_unique in data_status:
-    data_status_file.append(data_unique["status_name"])
-    print(data_status_file)
-    
-df_status_read =  status.read_csv(status_file_path)
-print("read")
-print(df_status_read)
-    
-if df_status_read is not None:
-    data_st = status.fetch_from_csv("PRJ", status_file_path)
-    for data_unique in data_st:
-        data_status.append(data_unique["status_name"])
-     
-    print(data_status)
-    print("-------------------------------------------------------------------------")
+if new_statuses:
+    # Adiciona os novos status ao arquivo. A função `save_to_csv` deve anexar.
+    status.save_to_csv("PRJ", new_statuses, status_file_path)
+    # Recarrega a lista completa do arquivo para garantir que a ordem está 100% correta.
+    reloaded_status_data = status.fetch_from_csv("PRJ", status_file_path)
+    if reloaded_status_data:
+        data_status = [item['status_name'] for item in reloaded_status_data]
 
 
 
@@ -806,6 +797,7 @@ app.layout = dmc.MantineProvider(
                                                                                 [dmc.Checkbox(label=k, value=k) for k in
                                                                                  data_status], my=10
                                                                             ),
+                                                                            value=[item['status_name'] for item in status_data if item['wait_status'] == 'True'],
 
                                                                         ),
                                                                         dmc.Text(id="checkbox-group-output_wait"),
@@ -941,7 +933,7 @@ app.layout = dmc.MantineProvider(
                                                             html.H4(
                                                                 [
                                                                     # html.Img(
-                                                                    #    src="assets/line-chart.png",
+                                                                    #    src="/assets/line-chart.png",
                                                                     #    height=25,
                                                                     #    className="me-1",
                                                                     # ),
@@ -993,7 +985,7 @@ app.layout = dmc.MantineProvider(
                                                             html.H4(
                                                                 [
                                                                     # html.Img(
-                                                                    #    src="assets/kanban1.png",
+                                                                    #    src="/assets/kanban1.png",
                                                                     #    height=25,
                                                                     #    className="me-1",
                                                                     # ),
@@ -1044,7 +1036,7 @@ app.layout = dmc.MantineProvider(
                                                             html.H4(
                                                                 [
                                                                     # html.Img(
-                                                                    #    src="assets/time-management.png",
+                                                                    #    src="/assets/time-management.png",
                                                                     #    height=25,
                                                                     #    className="me-1",
                                                                     # ),
@@ -1091,7 +1083,7 @@ app.layout = dmc.MantineProvider(
                                                             html.H4(
                                                                 [
                                                                     # html.Img(
-                                                                    #    src="assets/performance.png",
+                                                                    #    src="/assets/performance.png",
                                                                     #    height=25,
                                                                     #    className="me-1",
                                                                     # ),
@@ -2376,7 +2368,7 @@ def checkbox(projects, value):
 
 
 @app.callback(Output("checkbox-group-output_wait", "children"), Input("checkbox-group_wait", "value"))
-def checkbox(value):
+def checkbox_wait(value):
     return ", ".join(value) if value else None
 
 
@@ -2388,19 +2380,34 @@ def update_status_order(n_clicks, value):
     if value is not None and n_clicks is not None:
         status.delete_from_csv("PRJ",status_file_path)
         status.save_to_csv("PRJ", value, status_file_path)
-        return "List Updated successfull"
+        status_list_display = html.Ul([html.Li(i) for i in value])
+        return [html.P("List Updated successfull"), status_list_display]
 
 
   
-@app.callback(Output('status-wait-alert', 'children'), [Input("status-wait", "n_clicks"), Input("checkbox-group_wait", "value")])
-def update_status_wait(n_clicks, value):
-    print(value)
-    print(n_clicks)    
-    if value is not None and n_clicks is not None:
-        for st_name in value:
-            print(st_name)
-            status.update_csv("PRJ", st_name, "True", status_file_path)
-            return "Status Wait Updated successfull"
+@app.callback(
+    Output('status_wait_alert', 'children'),
+    [Input("status-wait", "n_clicks")],
+    [State("checkbox-group_wait", "value")]
+)
+def update_status_wait(n_clicks, selected_statuses):
+    if n_clicks is None or selected_statuses is None:
+        raise dash.exceptions.PreventUpdate
+
+    try:
+        df_status = pd.read_csv(status_file_path)
+        
+        # Primeiro, defina todos os 'wait_status' como False para o projeto
+        df_status.loc[df_status['project_key'] == 'PRJ', 'wait_status'] = False
+        
+        # Em seguida, defina como True apenas os status selecionados
+        df_status.loc[(df_status['project_key'] == 'PRJ') & (df_status['status_name'].isin(selected_statuses)), 'wait_status'] = True
+        
+        df_status.to_csv(status_file_path, index=False)
+        
+        return f"Wait statuses updated successfully for: {', '.join(selected_statuses)}"
+    except Exception as e:
+        return f"An error occurred: {e}"
 
   
 
@@ -2434,7 +2441,6 @@ def update_status_wait(n_clicks, value):
     Output("ct85", "children"),
     Output("wip_card", "children"),
     Output("mt_card", "children"),
-    Output("fe_card", "children"),
     Input("date-picker-select", "start_date"),
     Input("date-picker-select", "end_date"),
     Input("input_tries", "value"),
@@ -3132,9 +3138,18 @@ def graph_issue(
         ct_85,
         wip_inp,
         mt_card,
-        eff_card,
     )
 
 
+
+@app.callback(
+    Output('fe_card', 'children'),
+    Input('framework-multi-select', 'value')
+)
+def update_flow_efficiency_card(selected_project):
+    efficiency = analysis.calculate_flow_efficiency('data/status.csv', project_key='PRJ')
+    return f"{efficiency:.2f}%"
+
+
 if __name__ == "__main__":
-    app.run_server(debug=True, port=8053)
+    app.run_server(debug=True, port=8051)
