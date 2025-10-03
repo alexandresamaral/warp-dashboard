@@ -1314,6 +1314,36 @@ def cmd_shell(output, data, issue_data, since='', until='', args=None):
     code.interact(local=locals())
 
 
+def calculate_flow_efficiency(file_path, project_key='PRJ'):
+    """
+    Calculates the flow efficiency from a CSV file.
+
+    :param file_path: Path to the CSV file with status data.
+    :param project_key: The project key to filter the data.
+    :return: Flow efficiency percentage.
+    """
+    try:
+        df = pandas.read_csv(file_path)
+        project_df = df[df['project_key'] == project_key]
+        
+        if project_df.empty:
+            return 0
+
+        total_statuses = len(project_df)
+        work_statuses = len(project_df[project_df['wait_status'] == False])
+
+        if total_statuses == 0:
+            return 0
+
+        efficiency = (work_statuses / total_statuses) * 100
+        return efficiency
+    except FileNotFoundError:
+        return 0
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return 0
+
+
 def run(args):
     """
     run the utility in response to the command line arguments
