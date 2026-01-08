@@ -1,0 +1,26 @@
+project_key,status_name,wait_status
+PRJ,Product Backlog,True
+PRJ,In Product Discovery,False
+PRJ,Ready to prototype,True
+PRJ,In prototype,False
+PRJ,Business refinement,False
+PRJ,Tech refinement,False
+PRJ,Ready to Dev,True
+PRJ,To do,True
+PRJ,Backlog,True
+PRJ,In Development,False
+PRJ,Code review,False
+PRJ,Ready to test,True
+PRJ,In Test,False
+PRJ,Ready to validate,False
+PRJ,In Product Validation,False
+PRJ,Ready to Deploy,True
+PRJ,Applied in production,False
+PRJ,Done,False
+PRJ,Canceled,False
+PRJ,Em Andamento,False
+PRJ,PRIORITIZED,False
+PRJ,Test Failed,False
+PRJ,Validation Failed,False
+PRJ,Prototype review,False
+PRJ,New Ideas,False

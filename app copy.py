@@ -13,14 +13,12 @@ from dash_bootstrap_templates import ThemeSwitchAIO
 import collections
 import flow
 import os
-import numpy as np
 
 # ===== Reading n cleaning File ====== #
 DATA_FILE = "original.csv"
 df = pd.read_csv("original.csv")
 df_cru = df.copy()
 
-print(df)
 
 FONT_AWESOME = ["https://use.fontawesome.com/releases/v5.10.2/css/all.css"]
 app = dash.Dash(
@@ -138,13 +136,10 @@ template_theme2 = "darkly"
 url_theme1 = dbc.themes.COSMO
 url_theme2 = dbc.themes.LUMEN
 
-OMIT_ISSUE_TYPES = ("Epic", "Subtarefa")
+OMIT_ISSUE_TYPES = ("Epic","Subtarefa")
 EXCLUDE_WEEKENDS = False
-#FILTER_ISSUES_SINCE = "2025-12-01"  # (pandas.to_datetime(FILTER_ISSUES_UNTIL) - pandas.Timedelta(days=365)).strftime('%Y-%m-%d')
-#FILTER_ISSUES_UNTIL = "2025-12-31"  # e.g., '2021-12-01', 'today', etc
-
-FILTER_ISSUES_SINCE = (dt.now() - pd.Timedelta(days=30)).strftime('%Y-%m-%d')
-FILTER_ISSUES_UNTIL = dt.now().strftime('%Y-%m-%d')
+FILTER_ISSUES_UNTIL = "2020-08-01"  # e.g., '2021-12-01', 'today', etc
+FILTER_ISSUES_SINCE = "2020-07-15"  # (pandas.to_datetime(FILTER_ISSUES_UNTIL) - pandas.Timedelta(days=365)).strftime('%Y-%m-%d')
 
 SIMULATION_DAYS = 5  # N
 SIMULATION_ITEMS = 5  # N
@@ -152,43 +147,31 @@ SIMULATIONS = 10
 LAST_DAYS = 10
 
 status_df = pd.read_csv('data/status.csv')
-print("Data set satus.csv")
 print(status_df)
 
 # ========== c Status ======== #
 STATUS_ORDER = status_df["status_name"].unique()
-print("Status Order")
 print(STATUS_ORDER)
+
 
 ### read data ###
 data, dupes, filtered = analysis.read_data(
     DATA_FILE, since=FILTER_ISSUES_SINCE, until=FILTER_ISSUES_UNTIL
 )
-print("Data readed")
 print(data)
 
-
-print("processing data...")
 ### process issue data ###
 issue_data, (categories, *extra) = analysis.process_issue_data(
     data, exclude_weekends=EXCLUDE_WEEKENDS
 )
 
-print("process_cycle_data")
 ### calculate cycle data ###
 cycle_data = analysis.process_cycle_data(issue_data)
 cycle_data = cycle_data.reset_index()
-
-print("issue data:")
-print(issue_data)
-
-print("process_throughput_data")
 ### calculate Throughput per week ###
 throughput, throughput_per_week = analysis.process_throughput_data(
     issue_data, since=FILTER_ISSUES_SINCE, until=FILTER_ISSUES_UNTIL
 )
-
-print("process_wip_data")
 ### calculate work in progress ###
 wip, _ = analysis.process_wip_data(
     issue_data, since=FILTER_ISSUES_SINCE, until=FILTER_ISSUES_UNTIL
@@ -196,42 +179,26 @@ wip, _ = analysis.process_wip_data(
 wip = wip.reset_index()
 wip_melted = pd.melt(wip, ["Date"])
 wip_melted["value"] = wip_melted["value"].astype(float)
-
-
-print("calculate aging tickets")
 ### calculate aging tickets ###
 age_data = analysis.process_wip_age_data(
     issue_data, since=FILTER_ISSUES_SINCE, until=FILTER_ISSUES_UNTIL
 )
 
-print("calculate monte carlo Items and days")
-print("Throughput data")
-print(throughput)
-print("simulation days:" + str(SIMULATION_DAYS))
-print("simulation qty:" + str(SIMULATIONS))
-print("last days:" + str(LAST_DAYS))
-
 ### Monte carlo distribution items and days
-if throughput.empty:
-    distribution_when, samples = analysis.forecast_montecarlo_how_long_items(
-        throughput, items=SIMULATION_ITEMS, simulations=SIMULATIONS, window=LAST_DAYS
-    )
+distribution_when, samples = analysis.forecast_montecarlo_how_long_items(
+         throughput, items=SIMULATION_ITEMS, simulations=SIMULATIONS, window=LAST_DAYS
+     )
+distribution_how, samples_how = analysis.forecast_montecarlo_how_many_items(
+     throughput, days=SIMULATION_DAYS,simulations=SIMULATIONS,window=LAST_DAYS)
 
-    print("calculate monte carlo Many items")
-    distribution_how, samples_how = analysis.forecast_montecarlo_how_many_items(
-        throughput, days=SIMULATION_DAYS, simulations=SIMULATIONS, window=LAST_DAYS)
 
 # ========== Epic Status ======== #
-print("project keys")
 epic_list = df["project_key"].unique()
 df["project_key"] = df["project_key"].fillna("Not Identified")
 epic_list = df["project_key"].unique().tolist()
 
-print('-------------------- Lista de projetos ---------------')
-print(epic_list)
 
 # ========== Status ======== #
-print("carregando lista de status")
 status_file_path = "data/status.csv"
 data_status = []
 
@@ -243,12 +210,13 @@ if os.path.exists(status_file_path) and os.path.getsize(status_file_path) > 0:
 
 # Etapa 2: Pega todos os status únicos do dataframe principal para encontrar os que estão faltando.
 # Usar dropna() para evitar problemas com valores nulos.
-all_statuses = df["status_to_name"].dropna().unique().tolist()
+all_statuses = df["status_from_name"].dropna().unique().tolist()
 
 # Etapa 3: Se `status.csv` estava vazio ou não existia, inicializa com os status do dataframe.
 if not data_status and all_statuses:
     status.save_to_csv("PRJ", all_statuses, status_file_path)
     data_status = status.fetch_from_csv("PRJ", status_file_path)
+
 
 # Etapa 4: Verifica se há novos status no dataframe que não estão na lista atual.
 new_statuses = [s for s in all_statuses if s not in data_status]
@@ -270,13 +238,11 @@ if new_statuses:
     if reloaded_status_data:
         data_status = [item['status_name'] for item in reloaded_status_data]
 
+
 print("carregando lista de issue types")
 issue_list = df["issue_type_name"].unique()
 df["issue_type_name"] = df["issue_type_name"].fillna("Not Identified")
 issue_list = df["issue_type_name"].unique().tolist()
-
-
-print("Final processamento inicial")
 
 # ========= cards ============#
 icon = "bi bi-arrow-up"
@@ -393,16 +359,6 @@ app.layout = dmc.MantineProvider(
                                         dmc.NavLink(label="Correlation", id="link_Correlation"),
                                     ],
                                 ),
-                                dmc.NavLink(
-                                    label="Sprint",
-                                    icon=get_icon(icon="carbon:settings-check"),
-                                    childrenOffset=28,
-                                    opened=False,
-                                    children=[
-                                        dmc.NavLink(label="Leadtime Status", id="link_leadstatus"),
-                                        dmc.NavLink(label="Sprint Velocity", id="link_sprint_velocity"),
-                                    ],
-                                )
                             ],
                             style={"white-space": "wrap"},
                         )
@@ -527,16 +483,16 @@ app.layout = dmc.MantineProvider(
                                                     [
                                                         dcc.DatePickerRange(
                                                             id="date-picker-select",
-                                                            start_date=(dt.now() - pd.Timedelta(days=90)).strftime('%Y-%m-%d'),
-                                                            end_date=dt(dt.now().year, dt.now().month, dt.now().day),
+                                                            start_date=dt(2020, 6, 1),
+                                                            end_date=dt(2020, 8, 30),
                                                             min_date_allowed=dt(
-                                                                2025, 1, 1
+                                                                2020, 6, 1
                                                             ),
                                                             max_date_allowed=dt(
-                                                                2030, 12, 31
+                                                                2020, 6, 1
                                                             ),
                                                             initial_visible_month=dt(
-                                                                2020, 1, 1
+                                                                2020, 8, 30
                                                             ),
                                                             style={
                                                                 "font-size": "6px",
@@ -609,7 +565,7 @@ app.layout = dmc.MantineProvider(
                                                                                 ),
                                                                                 dbc.Input(
                                                                                     id="input_simulation_tries",
-                                                                                    value=100,
+                                                                                    value=1000,
                                                                                     placeholder="Only numbers",
                                                                                     type="number",
                                                                                     min=1,
@@ -625,7 +581,7 @@ app.layout = dmc.MantineProvider(
                                                                                 ),
                                                                                 dbc.Input(
                                                                                     id="input_days",
-                                                                                    value=30,
+                                                                                    value=10,
                                                                                     placeholder="only numbers",
                                                                                     type="number",
                                                                                     min=1,
@@ -668,7 +624,7 @@ app.layout = dmc.MantineProvider(
                                                                                         }
                                                                                         for i in issue_list
                                                                                     ],
-                                                                                    value="Subtarefa",
+                                                                                    value= "Subtarefa",
                                                                                     multi=True,
                                                                                     style={
                                                                                         "width": "auto",
@@ -775,12 +731,12 @@ app.layout = dmc.MantineProvider(
                                                             [
 
                                                                 dmc.Alert(
-                                                                    id="status_msg",
-                                                                    title="Status Order Update",
-                                                                    color="red",
-
-                                                                ),
-
+                                                                        id="status_msg",
+                                                                        title="Status Order Update",
+                                                                        color="red",
+                                                                        
+                                                                    ),
+                                                                
                                                                 dmc.Blockquote(
                                                                     [
                                                                         dmc.CheckboxGroup(
@@ -793,6 +749,7 @@ app.layout = dmc.MantineProvider(
                                                                                 [dmc.Checkbox(label=k, value=k) for k in
                                                                                  data_status], my=10
                                                                             ),
+                                                                            
 
                                                                         ),
                                                                         dmc.Text(id="checkbox-group-output"),
@@ -800,33 +757,34 @@ app.layout = dmc.MantineProvider(
                                                                     icon=DashIconify(icon="codicon:flame", width=30),
                                                                     color="red",
                                                                 ),
-
-                                                                dmc.Group(
+                                                                
+                                                                
+                                                               dmc.Group(
                                                                     [
                                                                         dmc.Button(
                                                                             "Save Status Order",
-                                                                            leftIcon=DashIconify(
-                                                                                icon="fluent:database-plug-connected-20-filled"),
+                                                                            leftIcon=DashIconify(icon="fluent:database-plug-connected-20-filled"),
                                                                             id="status-order",
                                                                         ),
                                                                     ]
                                                                 ),
                                                                 html.Br(),
-
+                                                                                                                               
+                                                                
                                                                 dmc.Stack(
                                                                     children=[
                                                                         dmc.Divider(variant="solid"),
 
                                                                     ],
                                                                 ),
-
+                                                                
                                                                 dmc.Alert(
-                                                                    id="status_wait_alert",
-                                                                    title="Status wait Update",
-                                                                    color="red",
-
-                                                                ),
-
+                                                                        id="status_wait_alert",
+                                                                        title="Status wait Update",
+                                                                        color="red",
+                                                                        
+                                                                    ),
+                                                                
                                                                 dmc.Blockquote(
                                                                     [
                                                                         dmc.CheckboxGroup(
@@ -839,9 +797,7 @@ app.layout = dmc.MantineProvider(
                                                                                 [dmc.Checkbox(label=k, value=k) for k in
                                                                                  data_status], my=10
                                                                             ),
-                                                                            value=[item['status_name'] for item in
-                                                                                   status_data if
-                                                                                   item['wait_status'] == 'True'],
+                                                                            value=[item['status_name'] for item in status_data if item['wait_status'] == 'True'],
 
                                                                         ),
                                                                         dmc.Text(id="checkbox-group-output_wait"),
@@ -850,19 +806,18 @@ app.layout = dmc.MantineProvider(
                                                                     icon=DashIconify(icon="codicon:flame", width=30),
                                                                     color="red",
                                                                 ),
-
+                                                                
                                                                 dmc.Group(
                                                                     [
                                                                         dmc.Button(
                                                                             "Save Wait Status",
-                                                                            leftIcon=DashIconify(
-                                                                                icon="fluent:database-plug-connected-20-filled"),
+                                                                            leftIcon=DashIconify(icon="fluent:database-plug-connected-20-filled"),
                                                                             id="status-wait",
                                                                         ),
                                                                     ]
                                                                 ),
                                                                 html.Br(),
-
+                                                                
                                                                 dmc.Stack(
                                                                     children=[
                                                                         dmc.Divider(variant="solid"),
@@ -2168,173 +2123,6 @@ app.layout = dmc.MantineProvider(
                                                     ],
                                                     title="Points",
                                                 ),
-                                                dbc.AccordionItem(
-                                                    [
-                                                        dbc.Row(
-                                                            [
-                                                                dbc.Col(
-                                                                    [
-                                                                        dbc.CardBody(
-                                                                            [
-                                                                                dbc.Row(
-                                                                                    [
-                                                                                        dbc.Col(
-                                                                                            [
-                                                                                                dbc.Card(
-                                                                                                    [
-                                                                                                        dbc.CardBody(
-                                                                                                            [
-                                                                                                                dbc.Row(
-                                                                                                                    [
-                                                                                                                        dbc.Col(
-                                                                                                                            [
-                                                                                                                                html.H6(
-                                                                                                                                    "Leadtime Status",
-                                                                                                                                    style=title_style,
-                                                                                                                                ),
-                                                                                                                            ]
-                                                                                                                        ),
-                                                                                                                        dbc.Col(
-                                                                                                                            [
-                                                                                                                                dbc.Button(
-                                                                                                                                    className="bi bi-arrows-angle-expand float-end",
-                                                                                                                                    style=button_max_style,
-                                                                                                                                    id="open_full_lead",
-                                                                                                                                    n_clicks=0,
-                                                                                                                                ),
-                                                                                                                                dbc.Modal(
-                                                                                                                                    [
-                                                                                                                                        dbc.ModalHeader(
-                                                                                                                                            dbc.ModalTitle(
-                                                                                                                                                "Leadtime Status",
-                                                                                                                                                style=title_style_full,
-                                                                                                                                            )
-                                                                                                                                        ),
-                                                                                                                                        dbc.ModalBody(
-                                                                                                                                            [
-                                                                                                                                                dcc.Graph(
-                                                                                                                                                    id="graph45",
-                                                                                                                                                    className="dbc",
-                                                                                                                                                    config=config_graph,
-                                                                                                                                                    style={
-                                                                                                                                                        "width": "90vw",
-                                                                                                                                                        "height": "90vh",
-                                                                                                                                                    },
-                                                                                                                                                )
-                                                                                                                                            ]
-                                                                                                                                        ),
-                                                                                                                                    ],
-                                                                                                                                    id="modal_leadstatus",
-                                                                                                                                    is_open=False,
-                                                                                                                                    fullscreen=True,
-                                                                                                                                ),
-                                                                                                                            ]
-                                                                                                                        ),
-                                                                                                                    ]
-                                                                                                                ),
-                                                                                                                dcc.Graph(
-                                                                                                                    id="graph46",
-                                                                                                                    className="dbc",
-                                                                                                                    config=config_graph,
-                                                                                                                ),
-                                                                                                            ],
-                                                                                                            # className="border-start border-info border-2",
-                                                                                                        )
-                                                                                                    ],
-                                                                                                    style=tab_card,
-                                                                                                ),
-                                                                                            ],
-                                                                                            sm=12,
-                                                                                            md=6,
-                                                                                        ),
-                                                                                        dbc.Col(
-                                                                                            [
-                                                                                                dbc.Card(
-                                                                                                    [
-                                                                                                        dbc.CardBody(
-                                                                                                            [
-                                                                                                                dbc.Row(
-                                                                                                                    [
-                                                                                                                        dbc.Col(
-                                                                                                                            [
-                                                                                                                                html.H6(
-                                                                                                                                    "Sprint Velocity",
-                                                                                                                                    className="card-text",
-                                                                                                                                    style=title_style,
-                                                                                                                                ),
-                                                                                                                            ]
-                                                                                                                        ),
-                                                                                                                        dbc.Col(
-                                                                                                                            [
-                                                                                                                                dbc.Button(
-                                                                                                                                    className="bi bi-arrows-angle-expand float-end",
-                                                                                                                                    style=button_max_style,
-                                                                                                                                    id="open_full_sprint",
-                                                                                                                                    n_clicks=0,
-                                                                                                                                ),
-                                                                                                                                dbc.Modal(
-                                                                                                                                    [
-                                                                                                                                        dbc.ModalHeader(
-                                                                                                                                            dbc.ModalTitle(
-                                                                                                                                                "Status Leadtime",
-                                                                                                                                                style=title_style_full,
-                                                                                                                                            )
-                                                                                                                                        ),
-                                                                                                                                        dbc.ModalBody(
-                                                                                                                                            [
-                                                                                                                                                dcc.Graph(
-                                                                                                                                                    id="graph48",
-                                                                                                                                                    className="dbc",
-                                                                                                                                                    config=config_graph,
-                                                                                                                                                    style={
-                                                                                                                                                        "width": "90vw",
-                                                                                                                                                        "height": "90vh",
-                                                                                                                                                    },
-                                                                                                                                                )
-                                                                                                                                            ]
-                                                                                                                                        ),
-                                                                                                                                    ],
-                                                                                                                                    id="modal_sprint_velocity",
-                                                                                                                                    is_open=False,
-                                                                                                                                    fullscreen=True,
-                                                                                                                                ),
-                                                                                                                            ]
-                                                                                                                        ),
-                                                                                                                    ]
-                                                                                                                ),
-                                                                                                                dcc.Graph(
-                                                                                                                    id="graph47",
-                                                                                                                    className="dbc",
-                                                                                                                    config=config_graph,
-                                                                                                                ),
-                                                                                                            ],
-                                                                                                            # className="border-start border-info border-2",
-                                                                                                        )
-                                                                                                    ],
-                                                                                                    style=tab_card,
-                                                                                                ),
-                                                                                            ],
-                                                                                            sm=12,
-                                                                                            md=6,
-                                                                                        ),
-                                                                                    ]
-                                                                                ),
-                                                                            ]
-                                                                        )
-                                                                    ],
-                                                                    sm=12,
-                                                                    lg=12,
-                                                                ),
-                                                            ],
-                                                            className="g-2 my-auto",
-                                                            style={
-                                                                "margin-top": "7px"
-                                                            },
-                                                        ),
-                                                    ],
-                                                    title="Leadtime Status and Sprint Velocity",
-                                                ),
-                                                
                                             ],
                                             start_collapsed=True,
                                         ),
@@ -2536,19 +2324,6 @@ app.callback(
     State("modal_ctb", "is_open"),
 )(toggle_modal_full)
 
-app.callback(
-    Output("modal_leadstatus", "is_open"),
-    Input("open_full_lead", "n_clicks"),
-    Input("link_leadstatus", "n_clicks"),
-    State("modal_leadstatus", "is_open"),
-)(toggle_modal_full)
-
-app.callback(
-    Output("modal_sprint_velocity", "is_open"),
-    Input("open_full_sprint", "n_clicks"),
-    Input("link_sprint_velocity", "n_clicks"),
-    State("modal_sprint_velocity", "is_open"),
-)(toggle_modal_full)
 
 #### Callback Mantine #####
 @app.callback(
@@ -2587,8 +2362,9 @@ def checkbox(projects, value):
     if value is not None:
         for v in value:
             status.update_csv("PRJ", v, False, status_file_path)
-            print(value)
-        return ", ".join(value) if value else None
+            print(value) 
+        return ", ".join(value) if value else None        
+    
 
 
 @app.callback(Output("checkbox-group-output_wait", "children"), Input("checkbox-group_wait", "value"))
@@ -2596,17 +2372,19 @@ def checkbox_wait(value):
     return ", ".join(value) if value else None
 
 
+
 @app.callback(Output('status_msg', 'children'), [Input("status-order", "n_clicks"), Input("checkbox-group", "value")])
 def update_status_order(n_clicks, value):
     print(value)
-    print(n_clicks)
+    print(n_clicks)    
     if value is not None and n_clicks is not None:
-        status.delete_from_csv("PRJ", status_file_path)
+        status.delete_from_csv("PRJ",status_file_path)
         status.save_to_csv("PRJ", value, status_file_path)
         status_list_display = html.Ul([html.Li(i) for i in value])
         return [html.P("List Updated successfull"), status_list_display]
 
 
+  
 @app.callback(
     Output('status_wait_alert', 'children'),
     [Input("status-wait", "n_clicks")],
@@ -2618,67 +2396,60 @@ def update_status_wait(n_clicks, selected_statuses):
 
     try:
         df_status = pd.read_csv(status_file_path)
-
+        
         # Primeiro, defina todos os 'wait_status' como False para o projeto
         df_status.loc[df_status['project_key'] == 'PRJ', 'wait_status'] = False
-
+        
         # Em seguida, defina como True apenas os status selecionados
-        df_status.loc[(df_status['project_key'] == 'PRJ') & (
-            df_status['status_name'].isin(selected_statuses)), 'wait_status'] = True
-
+        df_status.loc[(df_status['project_key'] == 'PRJ') & (df_status['status_name'].isin(selected_statuses)), 'wait_status'] = True
+        
         df_status.to_csv(status_file_path, index=False)
-
+        
         return f"Wait statuses updated successfully for: {', '.join(selected_statuses)}"
     except Exception as e:
         return f"An error occurred: {e}"
 
+  
 
 ### Callback graphs ###
 @app.callback(
-    [
-        Output("graph1_issue_type", "figure"),
-        Output("graph2_issue_points", "figure"),
-        Output("graph3_tp_week", "figure"),
-        Output("graph4_tp_avg", "figure"),
-        Output("graph5", "figure"),
-        Output("graph6", "figure"),
-        Output("graph7", "figure"),
-        Output("graph9", "figure"),
-        Output("graph10", "figure"),
-        Output("graph11_points_ct", "figure"),
-        Output("graph12", "figure"),
-        Output("graph13", "figure"),
-        Output("graph14", "figure"),
-        Output("graph15", "figure"),
-        Output("graph20", "figure"),
-        Output("graph21", "figure"),
-        Output("graph22", "figure"),
-        Output("graph25", "figure"),
-        Output("graph26", "figure"),
-        Output("graph27", "figure"),
-        Output("graph29", "figure"),
-        Output("graph32", "figure"),
-        Output("graph33", "figure"),
-        Output("graph43", "figure"),
-        Output("graph44", "figure"),
-        Output("ct85", "children"),
-        Output("wip_card", "children"),
-        Output("mt_card", "children"),
-        Output("graph45", "figure"),
-        Output("graph46", "figure"),
-        Output("graph47", "figure"),
-        Output("graph48", "figure"),
-    ],
-    [
-        Input("date-picker-select", "start_date"),
-        Input("date-picker-select", "end_date"),
-        Input("input_tries", "value"),
-        Input("input_loops", "value"),
-        Input("input_simulation_tries", "value"),
-        Input("input_days", "value"),
-        Input("framework-multi-select", "value"),
-        Input("issue-type-select", "value"),
-    ]
+    Output("graph1_issue_type", "figure"),
+    Output("graph2_issue_points", "figure"),
+    Output("graph3_tp_week", "figure"),
+    Output("graph4_tp_avg", "figure"),
+    Output("graph5", "figure"),
+    Output("graph6", "figure"),
+    Output("graph7", "figure"),
+    Output("graph9", "figure"),
+    Output("graph10", "figure"),
+    Output("graph11_points_ct", "figure"),
+    Output("graph12", "figure"),
+    Output("graph13", "figure"),
+    Output("graph14", "figure"),
+    Output("graph15", "figure"),
+    Output("graph20", "figure"),
+    Output("graph21", "figure"),
+    Output("graph22", "figure"),
+    Output("graph25", "figure"),
+    Output("graph26", "figure"),
+    Output("graph27", "figure"),
+    Output("graph29", "figure"),
+    Output("graph32", "figure"),
+    Output("graph33", "figure"),
+    Output("graph43", "figure"),
+    Output("graph44", "figure"),
+    Output("ct85", "children"),
+    Output("wip_card", "children"),
+    Output("mt_card", "children"),
+    Input("date-picker-select", "start_date"),
+    Input("date-picker-select", "end_date"),
+    Input("input_tries", "value"),
+    Input("input_loops", "value"),
+    Input("input_simulation_tries", "value"),
+    Input("input_days", "value"),
+    Input("framework-multi-select", "value"),
+    [Input("issue-type-select", "value")],
+    prevent_initial_call=True
 )
 def graph_issue(
         dateStart,
@@ -2704,17 +2475,19 @@ def graph_issue(
     FILTER_ISSUES_UNTIL = dateEnd
 
     print("SIMULATION_DAYS" + str(SIMULATION_DAYS))
-    print("SIMULATION_ITEMS" + str(SIMULATION_ITEMS))
+    print("SIMULATION_ITEMS" + str(SIMULATION_ITEMS))  
     print("SIMULATIONS" + str(SIMULATIONS))
     print("LAST_DAYS" + str(LAST_DAYS))
     print("PROJECTS" + str(PROJECTS))
     print("SIMULATION_DAYS" + str(SIMULATION_DAYS))
-
+    
     print("OMIT_ISSUE_TYPES" + str(OMIT_ISSUE_TYPES))
     print("EXCLUDE_WEEKENDS" + str(EXCLUDE_WEEKENDS))
     print("FILTER_ISSUES_SINCE" + str(FILTER_ISSUES_SINCE))
     print("FILTER_ISSUES_UNTIL" + str(FILTER_ISSUES_UNTIL))
 
+
+    
     ### read data ###
     print("read data")
     data, dupes, filtered = analysis.read_data(
@@ -2724,39 +2497,6 @@ def graph_issue(
         until=FILTER_ISSUES_UNTIL,
         projects=PROJECTS,
     )
-
-    print(data)
-
-    if data.empty:
-        no_data_fig = go.Figure()
-        no_data_fig.add_annotation(text="Não há dados para o período selecionado.<br>Por favor, escolha um novo intervalo de datas.",
-                                   xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
-                                   font=dict(size=20, color="gray"))
-        no_data_fig.update_layout(
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False),
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
-        )
-
-        empty_fig = go.Figure().update_layout(
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False),
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
-        )
-        
-        blank_card_text = "---"
-
-        return (
-            empty_fig, empty_fig, empty_fig, empty_fig, no_data_fig, empty_fig, empty_fig, empty_fig, empty_fig,
-            empty_fig, empty_fig, empty_fig, empty_fig, empty_fig, empty_fig, empty_fig, empty_fig, empty_fig,
-            empty_fig, empty_fig, empty_fig, empty_fig, empty_fig, empty_fig, empty_fig,
-            blank_card_text, blank_card_text, blank_card_text
-        )
-
-    data_aux = data.copy()
-
     print("process issue data")
     ### process issue data ###
     issue_data, (categories, *extra) = analysis.process_issue_data(
@@ -2779,7 +2519,7 @@ def graph_issue(
     wip = wip.reset_index()
     wip_melted = pd.melt(wip, ["Date"])
     wip_melted["value"] = wip_melted["value"].astype(float)
-
+    
     print("calcuate aging tickets")
     ### calculate aging tickets ###
     age_data = analysis.process_wip_age_data(
@@ -2794,14 +2534,14 @@ def graph_issue(
     print(throughput)
     print("Sumulações:" + str(SIMULATIONS))
     print(LAST_DAYS)
-
+    
     distribution_when, samples = analysis.forecast_montecarlo_how_long_items(
-        throughput, items=SIMULATION_ITEMS, simulations=SIMULATIONS, window=LAST_DAYS
-    )
+         throughput, items=SIMULATION_ITEMS, simulations=SIMULATIONS, window=LAST_DAYS
+     )
     print("Distribution How Many Items")
     distribution_how, samples_how = analysis.forecast_montecarlo_how_many_items(throughput, days=SIMULATION_DAYS,
-                                                                                simulations=SIMULATIONS,
-                                                                                window=LAST_DAYS)
+                                                                                 simulations=SIMULATIONS,
+                                                                                 window=LAST_DAYS)
 
     ## Figure 1 ##
     fig = px.pie(
@@ -2893,7 +2633,7 @@ def graph_issue(
     fig5 = px.line(
         cycle_data,
         x="Complete Date",
-        y=["Cycle Time", "Moving Average (10 items)", "Average"],line_shape='spline',
+        y=["Cycle Time", "Moving Average (10 items)", "Average"],
     )
 
     fig5.update_layout(
@@ -2911,7 +2651,6 @@ def graph_issue(
         name="Median",
         text=average_annotation_text,
         mode="lines+text",
-        line_shape='spline',
     )
 
     fig5.update_layout(
@@ -2980,27 +2719,9 @@ def graph_issue(
 
     # scatter_title = "Cycle Time Scatterplot..: " + FILTER_ISSUES_SINCE + " and " + FILTER_ISSUES_UNTIL
     df = cycle_data
-    df['issue_url'] = 'https://seu-jira.atlassian.net/browse/' + df['Work Item']
     fig7 = px.scatter(
-        df, x="Complete Date", y=["Cycle Time", "Issue Type"], color = "Issue Type",color_discrete_map={'Bug':'red',
-                                 'Task':'blue',
-                                 'Story':'green',
-                                 'Epic':'purple',
-                                 'Sub-Bug': 'red',
-                                 'Débito técnico':'orange',
-                                 'Sub-task': 'blue',                                                                                                                                    
-                                 'Spike': 'orange',   
-                                 },
-        custom_data=['Work Item', 'issue_url'] 
+        df, x="Complete Date", y=["Cycle Time", "Issue Type"], color="Issue Type"
     ).update_layout(yaxis_title="Cycle Time")
-    
-    fig7.update_traces(
-    hovertemplate='<b>%{customdata[0]}</b><br>' +
-                  'Complete Date: %{x}<br>' +
-                  'Cycle Time: %{y}<br>' +
-                  '<extra></extra>',
-    selector=dict(mode='markers')
-    )
 
     for v in (0.25, 0.5, 0.75, 0.85, 0.95):
         pertencil = cycle_data["Cycle Time"].quantile(v)
@@ -3060,27 +2781,17 @@ def graph_issue(
     f = analysis.process_flow_data(
         data, since=FILTER_ISSUES_SINCE, until=FILTER_ISSUES_UNTIL
     )
-
-    my_list = all_statuses
-
-    
-    
+    my_list = STATUS_ORDER
     for item in my_list.copy():
-        try:
+        try  :
             if not (item in f):
                 my_list.remove(item)
         except:
             print("Error processing item: " + str(item))
- 
 
-    print(STATUS_ORDER)
-    list_aux = all_statuses
-    # STATUS_LISTA_AUX = ['Product Backlog','In Product Discovery','Ready to prototype','In prototype','Business refinement','Tech refinement','Ready to Dev','To do','Backlog','In Development','Code Review', 'Ready to test','In Test','Ready to validate','In Product Validation','Ready to Deploy','Applied in Production','Concluído']
-    STATUS_LISTA_AUX = list_aux
+    STATUS_LISTA_AUX = my_list
     print("lista de status no callback")
     print(STATUS_LISTA_AUX)
-    print(FILTER_ISSUES_SINCE)
-    print(FILTER_ISSUES_UNTIL)
 
     f = analysis.process_flow_data(
         data, since=FILTER_ISSUES_SINCE, until=FILTER_ISSUES_UNTIL
@@ -3121,18 +2832,21 @@ def graph_issue(
     fig9.update_layout(xaxis_title=None, yaxis_title=None)
 
     #############################################################
-    ct_median = age_data.groupby(['issue_type', 'issue_points']).agg({'Age':  'mean'}).reset_index()
+    ct_median = age_data
     ct_media_round = ct_median.round(2)
 
-    fig10 = px.sunburst(ct_media_round, path=['issue_type', 'issue_points' , 'Age'], values='Age', color='issue_type', color_discrete_map={'Bug':'red',
-                                 'Task':'blue',
-                                 'Story':'green',
-                                 'Epic':'purple',
-                                 'Sub-Bug': 'light red',
-                                 'Débito técnico':'orange',
-                                 'Sub-task': 'light blue',                                                                                                                                    
-                                 'Spike': 'light orange',   
-                                 })
+    fig10 = px.sunburst(
+        ct_media_round,
+        path=["issue_type", "issue_points", "Age in Stage"],
+        values="Age in Stage",
+        color="issue_type",
+        color_discrete_map={
+            "Bug": "red",
+            "Task": "blue",
+            "Story": "green",
+            "Epic": "purple",
+        },
+    )
 
     fig20 = go.Figure(fig10)
     fig20.update_layout(width=1800, height=700)
@@ -3166,25 +2880,9 @@ def graph_issue(
     # ################## ############## #
     # scatter_title_aging = "Current Work in Progess Aging..: " + FILTER_ISSUES_SINCE + " and " + FILTER_ISSUES_UNTIL
 
-    # ✅ Resetar o índice para converter issue_key em coluna
-    age_data_copy = age_data.reset_index()
-
-    # ✅ Criar coluna de URL
-    age_data_copy['issue_url'] = 'https://seu-jira.atlassian.net/browse/' + age_data_copy['issue_key'].astype(str)
-
     fig12 = px.scatter(
-        age_data_copy, x="last_issue_status", y=["Age in Stage"],
-        custom_data=['issue_key', 'issue_url']  # ✅ Usar 'issue_key'
+        age_data, x="last_issue_status", y=["Age in Stage"]
     ).update_layout(xaxis_title="Status", yaxis_title="Days", autosize=True)
-
-    # ✅ Atualizar hovertemplate para mostrar link
-    fig12.update_traces(
-        hovertemplate='<b>%{customdata[0]}</b><br>' +
-                    'Status: %{x}<br>' +
-                    'Age in Stage: %{y}<br>' +
-                    '<extra></extra>',
-        selector=dict(mode='markers')
-    )
 
     p50Text = "50%  (" + "{:.2f}".format(age_data["P50"].max()) + " days" + ")"
     p75Text = "75%  (" + "{:.2f}".format(age_data["P75"].max()) + " days" + ")"
@@ -3265,8 +2963,6 @@ def graph_issue(
 
     fig12.update_layout(
         margin=dict(l=10, r=10, t=10, b=10),
-        clickmode='event+select',  # ✅ Ativar clique
-        hovermode='closest'
     )
 
     fig12.update_xaxes(tickangle=0)
@@ -3281,7 +2977,6 @@ def graph_issue(
         x=1
     ))
     fig32.update_layout(showlegend=True)
-    fig12.update_layout(xaxis_title=None, yaxis_title=None)
     fig12.update_layout(xaxis_title=None, yaxis_title=None)
 
     # ############ ################
@@ -3443,82 +3138,7 @@ def graph_issue(
     fig44 = go.Figure(fig14)
     fig44.update_layout(showlegend=True)
     fig14.update_layout(xaxis_title=None, yaxis_title=None)
-    
-    
-    # leadtime by status histogram
-    leadtime_status = issue_data.groupby(['prev_issue_status']).agg({
-    'lead_time_days':  'mean',
-    'cycle_time_days': 'mean'
-    }).reset_index()
 
-
-    fig45 = px.histogram(leadtime_status, x="prev_issue_status", y="lead_time_days", nbins=10).update_layout(xaxis_title="Statuses", yaxis_title="Leadtime")
-
-    fig45.update_layout(
-            xaxis=dict(
-            dtick= (1)
-        )
-    )
-
-    fig45.update_layout(
-        yaxis=dict(
-            dtick= (1),
-            
-        )
-    )
-    
-    fig46=fig45
-    
-    # sprint velocity
-    
-    closed_issues = data_aux[data_aux['status_to_category_name'] == 'Done'].copy()
-    velocity_by_sprint = closed_issues.groupby('sprint_name').agg({
-        'issue_points': 'sum'
-        }).reset_index()
-    
-    fig47 = px.bar(
-            velocity_by_sprint,
-            x='sprint_name',
-            y='issue_points',
-            labels={'issue_points': 'Story Points', 'sprint_name': 'Sprint'},
-            color='issue_points',
-            color_continuous_scale='blues',
-
-    )
-    
-    x = np.arange(len(velocity_by_sprint))
-    z = np.polyfit(x, velocity_by_sprint['issue_points'].values, 1)
-    trend_line = z[0] * x + z[1]
-    
-    fig47.add_trace(go.Scatter(
-        x=velocity_by_sprint['sprint_name'],
-        y=trend_line,
-        mode='lines',
-        name='Tendency',
-        line=dict(color='red', width=1, dash='solid')
-    ))
-
-    fig47.update_layout(xaxis_tickangle=-10, hovermode='x')
-    
-    fig47.update_layout({
-    'plot_bgcolor': 'rgba(0, 0, 0, 0)',
-    'paper_bgcolor': 'rgba(0, 0, 0, 0)',
-    })
-    
-    fig47.update_layout(legend=dict(
-        orientation="h",
-        yanchor="bottom",
-        y=1.02,
-        xanchor="right",
-        x=1
-    ))    
-
-    fig48 = fig47
-    
-    print("data inicial executada")
-    print(FILTER_ISSUES_SINCE)
-    print("data final executada")
-    print(FILTER_ISSUES_UNTIL)
     print("Fim do callback")
     # ########### #################
     # ct_85 = "30 Days or Less"
@@ -3555,10 +3175,6 @@ def graph_issue(
         ct_85,
         wip_inp,
         mt_card,
-        fig45,
-        fig46,
-        fig47,
-        fig48,
     )
 
 
