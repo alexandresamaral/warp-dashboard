@@ -9,7 +9,7 @@ import pandas as pd
 from datetime import datetime as dt
 import dash_mantine_components as dmc
 from dash_iconify import DashIconify
-from dash_bootstrap_templates import ThemeSwitchAIO
+# from dash_bootstrap_templates import ThemeSwitchAIO
 import collections
 import flow
 import os
@@ -713,19 +713,6 @@ app.layout = dmc.MantineProvider(
                                                             ],
                                                             styles=accordion_style
 
-                                                        ),
-                                                        html.Div(
-                                                            ThemeSwitchAIO(
-                                                                aio_id="theme",
-                                                                themes=[
-                                                                    url_theme1,
-                                                                    url_theme2,
-                                                                ],
-                                                            ),
-                                                            style={
-                                                                "margin-top": "15px",
-                                                                "align": "center",
-                                                            },
                                                         ),
                                                     ],
                                                     id="offcanvas",
