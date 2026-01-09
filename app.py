@@ -24,7 +24,7 @@ print(df)
 
 FONT_AWESOME = ["https://use.fontawesome.com/releases/v5.10.2/css/all.css"]
 app = dash.Dash(
-    __name__, external_stylesheets=[dbc.themes.PULSE, dbc.icons.BOOTSTRAP]
+    __name__, external_stylesheets=[dbc.themes.YETI, dbc.icons.BOOTSTRAP]
 )
 # dash.Dash(__name__, external_stylesheets=[dbc.themes.LUX]
 # dash.Dash(__name__, external_stylesheets=[FONT_AWESOME, dbc.themes.LUX, dbc.icons.BOOTSTRAP])
@@ -1205,7 +1205,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                 ),
                                                                                                                 dbc.ModalBody(
                                                                                                                     [
-                                                                                                                        dcc.Graph(
+                                                                                                                        dcc.Loading(dcc.Graph(
                                                                                                                             id="graph25",
                                                                                                                             className="dbc",
                                                                                                                             config=config_graph_modal,
@@ -1213,7 +1213,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                                 "width": "95vw",
                                                                                                                                 "height": "85vh",
                                                                                                                             },
-                                                                                                                        ),
+                                                                                                                        )),
                                                                                                                     ]
                                                                                                                 ),
                                                                                                             ],
@@ -1231,11 +1231,11 @@ app.layout = dmc.MantineProvider(
                                                                                         ),
                                                                                         dbc.Row(
                                                                                             html.Div(
-                                                                                                dcc.Graph(
+                                                                                                dcc.Loading(dcc.Graph(
                                                                                                     id="graph5",
                                                                                                     className="dbc",
                                                                                                     config=config_graph,
-                                                                                                ),
+                                                                                                )),
 
                                                                                             ), style={'width': '100%',
                                                                                                       'height': '100%'}
@@ -1283,7 +1283,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                 ),
                                                                                                                 dbc.ModalBody(
                                                                                                                     [
-                                                                                                                        dcc.Graph(
+                                                                                                                        dcc.Loading(dcc.Graph(
                                                                                                                             id="graph27",
                                                                                                                             className="dbc",
                                                                                                                             config=config_graph_modal,
@@ -1291,7 +1291,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                                 "width": "95vw",
                                                                                                                                 "height": "85vh",
                                                                                                                             },
-                                                                                                                        ),
+                                                                                                                        )),
                                                                                                                     ]
                                                                                                                 ),
                                                                                                             ],
@@ -1310,11 +1310,11 @@ app.layout = dmc.MantineProvider(
 
                                                                                         dbc.Row(
                                                                                             html.Div(
-                                                                                                dcc.Graph(
+                                                                                                dcc.Loading(dcc.Graph(
                                                                                                     id="graph7",
                                                                                                     className="dbc",
                                                                                                     config=config_graph,
-                                                                                                ),
+                                                                                                )),
 
                                                                                             ), style={'width': '100%',
                                                                                                       'height': '100%'}
@@ -1362,7 +1362,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                 ),
                                                                                                                 dbc.ModalBody(
                                                                                                                     [
-                                                                                                                        dcc.Graph(
+                                                                                                                        dcc.Loading(dcc.Graph(
                                                                                                                             id="graph26",
                                                                                                                             className="dbc",
                                                                                                                             config=config_graph_modal,
@@ -1370,7 +1370,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                                 "width": "95vw",
                                                                                                                                 "height": "85vh",
                                                                                                                             },
-                                                                                                                        ),
+                                                                                                                        )),
                                                                                                                     ]
                                                                                                                 ),
                                                                                                             ],
@@ -1389,11 +1389,11 @@ app.layout = dmc.MantineProvider(
 
                                                                                         dbc.Row(
                                                                                             html.Div(
-                                                                                                dcc.Graph(
+                                                                                                dcc.Loading(dcc.Graph(
                                                                                                     id="graph6",
                                                                                                     className="dbc",
                                                                                                     config=config_graph,
-                                                                                                ),
+                                                                                                )),
 
                                                                                             ),
                                                                                         ),
@@ -1464,7 +1464,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                 ),
                                                                                                                 dbc.ModalBody(
                                                                                                                     [
-                                                                                                                        dcc.Graph(
+                                                                                                                        dcc.Loading(dcc.Graph(
                                                                                                                             id="graph32",
                                                                                                                             className="dbc",
                                                                                                                             config=config_graph_modal,
@@ -1472,7 +1472,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                                 "width": "90vw",
                                                                                                                                 "height": "90vh",
                                                                                                                             },
-                                                                                                                        )
+                                                                                                                        ))
                                                                                                                     ]
                                                                                                                 ),
                                                                                                             ],
@@ -1484,11 +1484,11 @@ app.layout = dmc.MantineProvider(
                                                                                                 ),
                                                                                             ]
                                                                                         ),
-                                                                                        dcc.Graph(
+                                                                                        dcc.Loading(dcc.Graph(
                                                                                             id="graph13",
                                                                                             className="dbc",
                                                                                             config=config_graph,
-                                                                                        ),
+                                                                                        )),
                                                                                     ],
                                                                                     # className="border-start border-info border-2",
                                                                                 )
@@ -1565,7 +1565,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                                                 ),
                                                                                                                                                 dbc.ModalBody(
                                                                                                                                                     [
-                                                                                                                                                        dcc.Graph(
+                                                                                                                                                        dcc.Loading(dcc.Graph(
                                                                                                                                                             id="graph9",
                                                                                                                                                             className="dbc",
                                                                                                                                                             config=config_graph_modal,
@@ -1573,7 +1573,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                                                                 "width": "55vw",
                                                                                                                                                                 "height": "50vh",
                                                                                                                                                             },
-                                                                                                                                                        )
+                                                                                                                                                        ))
                                                                                                                                                     ]
                                                                                                                                                 ),
                                                                                                                                             ],
@@ -1589,7 +1589,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                             [
                                                                                                                                 dbc.Col(
                                                                                                                                     [
-                                                                                                                                        dcc.Graph(
+                                                                                                                                        dcc.Loading(dcc.Graph(
                                                                                                                                             id="graph29",
                                                                                                                                             className="dbc",
                                                                                                                                             config=config_graph_modal,
@@ -1597,7 +1597,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                                                 "width": "90vw",
                                                                                                                                                 "height": "90vh",
                                                                                                                                             },
-                                                                                                                                        ),
+                                                                                                                                        )),
                                                                                                                                     ]
                                                                                                                                 ),
                                                                                                                             ]
@@ -1625,11 +1625,11 @@ app.layout = dmc.MantineProvider(
                                                                                                 ),
                                                                                             ]
                                                                                         ),
-                                                                                        dcc.Graph(
+                                                                                        dcc.Loading(dcc.Graph(
                                                                                             id="graph10",
                                                                                             className="dbc",
                                                                                             config=config_graph,
-                                                                                        ),
+                                                                                        )),
                                                                                     ],
                                                                                     # className="border-start border-info border-2",
                                                                                 )
@@ -1675,7 +1675,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                 ),
                                                                                                                 dbc.ModalBody(
                                                                                                                     [
-                                                                                                                        dcc.Graph(
+                                                                                                                        dcc.Loading(dcc.Graph(
                                                                                                                             id="graph33",
                                                                                                                             className="dbc",
                                                                                                                             config=config_graph,
@@ -1683,8 +1683,8 @@ app.layout = dmc.MantineProvider(
                                                                                                                                 "width": "90vw",
                                                                                                                                 "height": "45vh",
                                                                                                                             },
-                                                                                                                        ),
-                                                                                                                        dcc.Graph(
+                                                                                                                        )),
+                                                                                                                        dcc.Loading(dcc.Graph(
                                                                                                                             id="graph4_tp_avg",
                                                                                                                             className="dbc",
                                                                                                                             config=config_graph,
@@ -1692,7 +1692,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                                 "width": "95vw",
                                                                                                                                 "height": "45vh",
                                                                                                                             },
-                                                                                                                        ),
+                                                                                                                        )),
                                                                                                                     ]
                                                                                                                 ),
                                                                                                             ],
@@ -1704,11 +1704,11 @@ app.layout = dmc.MantineProvider(
                                                                                                 ),
                                                                                             ]
                                                                                         ),
-                                                                                        dcc.Graph(
+                                                                                        dcc.Loading(dcc.Graph(
                                                                                             id="graph3_tp_week",
                                                                                             className="dbc",
                                                                                             config=config_graph,
-                                                                                        ),
+                                                                                        )),
                                                                                     ],
                                                                                     # className="border-start border-info border-2",
                                                                                 )
@@ -1781,7 +1781,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                                         ),
                                                                                                                                         dbc.ModalBody(
                                                                                                                                             [
-                                                                                                                                                dcc.Graph(
+                                                                                                                                                dcc.Loading(dcc.Graph(
                                                                                                                                                     id="graph43",
                                                                                                                                                     className="dbc",
                                                                                                                                                     config=config_graph,
@@ -1789,7 +1789,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                                                         "width": "90vw",
                                                                                                                                                         "height": "90vh",
                                                                                                                                                     },
-                                                                                                                                                )
+                                                                                                                                                ))
                                                                                                                                             ]
                                                                                                                                         ),
                                                                                                                                     ],
@@ -1801,11 +1801,11 @@ app.layout = dmc.MantineProvider(
                                                                                                                         ),
                                                                                                                     ]
                                                                                                                 ),
-                                                                                                                dcc.Graph(
+                                                                                                                dcc.Loading(dcc.Graph(
                                                                                                                     id="graph14",
                                                                                                                     className="dbc",
                                                                                                                     config=config_graph,
-                                                                                                                ),
+                                                                                                                )),
                                                                                                             ],
                                                                                                             # className="border-start border-info border-2",
                                                                                                         )
@@ -1851,7 +1851,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                                         ),
                                                                                                                                         dbc.ModalBody(
                                                                                                                                             [
-                                                                                                                                                dcc.Graph(
+                                                                                                                                                dcc.Loading(dcc.Graph(
                                                                                                                                                     id="graph44",
                                                                                                                                                     className="dbc",
                                                                                                                                                     config=config_graph,
@@ -1859,7 +1859,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                                                         "width": "90vw",
                                                                                                                                                         "height": "90vh",
                                                                                                                                                     },
-                                                                                                                                                )
+                                                                                                                                                ))
                                                                                                                                             ]
                                                                                                                                         ),
                                                                                                                                     ],
@@ -1871,11 +1871,11 @@ app.layout = dmc.MantineProvider(
                                                                                                                         ),
                                                                                                                     ]
                                                                                                                 ),
-                                                                                                                dcc.Graph(
+                                                                                                                dcc.Loading(dcc.Graph(
                                                                                                                     id="graph15",
                                                                                                                     className="dbc",
                                                                                                                     config=config_graph,
-                                                                                                                ),
+                                                                                                                )),
                                                                                                             ],
                                                                                                             # className="border-start border-info border-2",
                                                                                                         )
@@ -1951,7 +1951,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                                                 dbc.Row(
                                                                                                                                                     [
                                                                                                                                                         dbc.Col(
-                                                                                                                                                            dcc.Graph(
+                                                                                                                                                            dcc.Loading(dcc.Graph(
                                                                                                                                                                 id="graph2_issue_points",
                                                                                                                                                                 className="dbc",
                                                                                                                                                                 responsive=True,
@@ -1960,10 +1960,10 @@ app.layout = dmc.MantineProvider(
                                                                                                                                                                     "width": "45vw",
                                                                                                                                                                     "height": "60vh",
                                                                                                                                                                 },
-                                                                                                                                                            ),
+                                                                                                                                                            )),
                                                                                                                                                         ),
                                                                                                                                                         dbc.Col(
-                                                                                                                                                            dcc.Graph(
+                                                                                                                                                            dcc.Loading(dcc.Graph(
                                                                                                                                                                 id="graph21",
                                                                                                                                                                 className="dbc",
                                                                                                                                                                 responsive=True,
@@ -1972,7 +1972,7 @@ app.layout = dmc.MantineProvider(
                                                                                                                                                                     "width": "45vw",
                                                                                                                                                                     "height": "60vh",
                                                                                                                                                                 },
-                                                                                                                                                            )
+                                                                                                                                                            ))
                                                                                                                                                         ),
                                                                                                                                                     ]
                                                                                                                                                 ),
@@ -1987,11 +1987,11 @@ app.layout = dmc.MantineProvider(
                                                                                                                         ),
                                                                                                                     ]
                                                                                                                 ),
-                                                                                                                dcc.Graph(
+                                                                                                                dcc.Loading(dcc.Graph(
                                                                                                                     id="graph1_issue_type",
                                                                                                                     className="dbc",
                                                                                                                     config=config_graph,
-                                                                                                                ),
+                                                                                                                )),
                                                                                                             ],
                                                                                                             # className="border-start border-info border-2",
                                                                                                         )
